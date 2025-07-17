@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRM - Pipeline de Leads</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { 
+      background: #0f172a; 
+      color: #fff; 
+      margin: 0;
+      padding: 20px;
+      font-family: Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .crm-container { 
+      max-width: 1400px; 
+      margin: 0 auto; 
+      background: #1e293b; 
+      border-radius: 18px; 
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12); 
+      padding: 32px 24px; 
+    }
+    
+    h1 { 
+      text-align: center; 
+      font-size: 2.2rem; 
+      margin-bottom: 32px; 
+      color: #fbbf24;
+    }
+    
+    .back-btn { 
+      display: block; 
+      margin: 0 auto 24px auto; 
+      background: #fbbf24; 
+      color: #1e293b; 
+      border: none; 
+      border-radius: 8px; 
+      padding: 12px 28px; 
+      font-size: 1rem; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: background 0.2s; 
+      text-align: center; 
+      text-decoration: none; 
+    }
+    
+    .back-btn:hover { 
+      background: #f59e0b; 
+    }
+    
+    /* Pipeline Kanban */
+    .pipeline-container {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 20px;
+    }
+    
+    .pipeline-column {
+      min-width: 300px;
+      background: #273548;
+      border-radius: 12px;
+      padding: 20px;
+      flex-shrink: 0;
+    }
+    
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #334155;
+    }
+    
+    .column-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fbbf24;
+    }
+    
+    .column-count {
+      background: #475569;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    .lead-card {
+      background: #334155;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid #fbbf24;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .lead-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      border-left-color: #f59e0b;
+    }
+    
+    .lead-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+      color: #fbbf24;
+    }
+    
+    .lead-email {
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+    
+    .lead-phone {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    
+    .lead-date {
+      color: #64748b;
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+    
+    .lead-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+      gap: 4px;
+    }
+    
+    .delete-lead-btn {
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .delete-lead-btn:hover {
+      background: #dc2626;
+    }
+    
+    .no-leads {
+      text-align: center;
+      color: #64748b;
+      font-style: italic;
+      padding: 20px;
+    }
+    
+    .debug-info {
+      background: #334155;
+      color: #fff;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    
+    @media (max-width: 768px) {
+      .pipeline-container {
+        flex-direction: column;
+      }
+      
+      .pipeline-column {
+        min-width: auto;
+      }
+      
+      .crm-container {
+        padding: 16px 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="crm-container">
+    <a href="index.html" class="back-btn">Voltar para Landing Page</a>
+    <h1>Pipeline de Leads</h1>
+    <div class="pipeline-container" id="pipelineContainer"></div>
+    <button id="addColumnBtn" style="margin: 24px auto 0 auto; display: block; background: #fbbf24; color: #1e293b; border: none; border-radius: 8px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer;">+ Adicionar coluna</button>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = 'https://wwnylounipjlxjxyopnf.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bnlsb3VuaXBqbHhqeHlvcG5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyMTg5ODEsImV4cCI6MjA1OTc5NDk4MX0.p9KB50Srt7vyvZNc0pFXycvsQivnB0x4H8TdScNRKiU';
+    let supabase;
+    function updateDebugInfo(message) {
+      const debugStatus = document.getElementById('debugStatus');
+      if (debugStatus) debugStatus.textContent = message;
+      console.log('DEBUG:', message);
+    }
+    function initSupabaseCRM() {
+      if (window.supabase && window.supabase.createClient) {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        updateDebugInfo('✅ Supabase inicializado!');
+        return true;
+      } else {
+        updateDebugInfo('❌ Supabase não está disponível!');
+        return false;
+      }
+    }
+    initSupabaseCRM();
+
+    // Carregar colunas e leads do Supabase
+    let columns = [];
+    let leads = [];
+    async function carregarTudo() {
+      updateDebugInfo('Carregando colunas e leads...');
+      // Carregar colunas
+      const { data: cols, error: colErr } = await supabase
+        .from('kanban_columns')
+        .select('*')
+        .order('order', { ascending: true });
+      if (colErr) {
+        updateDebugInfo('Erro ao carregar colunas: ' + colErr.message);
+        return;
+      }
+      columns = cols;
+      // Carregar leads
+      const { data: lds, error: leadErr } = await supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (leadErr) {
+        updateDebugInfo('Erro ao carregar leads: ' + leadErr.message);
+        return;
+      }
+      leads = lds;
+      renderPipeline();
+    }
+    // Renderizar pipeline
+    function renderPipeline() {
+      const pipeline = document.getElementById('pipelineContainer');
+      pipeline.innerHTML = '';
+      columns.forEach((col, colIdx) => {
+        const colDiv = document.createElement('div');
+        colDiv.className = 'pipeline-column';
+        colDiv.dataset.colId = col.id;
+        
+        // Permitir drop também na coluna inteira
+        colDiv.ondragover = e => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+        colDiv.ondrop = async e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const leadId = e.dataTransfer.getData('lead-id');
+          if (!leadId) return;
+          
+          updateDebugInfo(`🔄 Movendo lead ${leadId} para coluna ${col.id} (drop na coluna)...`);
+          
+          try {
+            const { data, error } = await supabase
+              .from('leads')
+              .update({ column_id: col.id })
+              .eq('id', leadId)
+              .select();
+            
+            if (error) {
+              updateDebugInfo('❌ Erro ao mover lead: ' + error.message);
+            } else {
+              updateDebugInfo('✅ Lead movido com sucesso!');
+              setTimeout(carregarTudo, 100);
+            }
+          } catch (err) {
+            updateDebugInfo('❌ Erro inesperado: ' + err.message);
+          }
+        };
+        // Header editável
+        const header = document.createElement('div');
+        header.className = 'column-header';
+        const title = document.createElement('div');
+        title.className = 'column-title';
+        title.textContent = col.name;
+        title.contentEditable = true;
+        title.spellcheck = false;
+        title.addEventListener('blur', async e => {
+          const newName = title.textContent.trim() || 'Coluna';
+          if (newName !== col.name) {
+            await supabase.from('kanban_columns').update({ name: newName }).eq('id', col.id);
+            carregarTudo();
+          }
+        });
+        // Botão excluir coluna
+        if (columns.length > 1) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '✖';
+          delBtn.title = 'Excluir coluna';
+          delBtn.style = 'background:none;border:none;color:#f87171;font-size:1.1em;cursor:pointer;margin-left:8px;';
+          delBtn.onclick = async () => {
+            // Remover leads dessa coluna (ou mover para a primeira coluna)
+            const firstColId = columns[0].id;
+            await supabase.from('leads').update({ column_id: firstColId }).eq('column_id', col.id);
+            await supabase.from('kanban_columns').delete().eq('id', col.id);
+            carregarTudo();
+          };
+          header.appendChild(delBtn);
+        }
+        header.appendChild(title);
+        // Contador
+        const count = document.createElement('div');
+        count.className = 'column-count';
+        count.id = `count-${col.id}`;
+        header.appendChild(count);
+        colDiv.appendChild(header);
+        // Container de cards
+        const leadsContainer = document.createElement('div');
+        leadsContainer.className = 'leads-container';
+        leadsContainer.id = `leads-${col.id}`;
+        // Permitir drop
+        leadsContainer.ondragover = e => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+        leadsContainer.ondrop = async e => {
+          e.preventDefault();
+          e.stopPropagation();
+          const leadId = e.dataTransfer.getData('lead-id');
+          if (!leadId) {
+            updateDebugInfo('❌ Lead ID não encontrado no drop');
+            return;
+          }
+          updateDebugInfo(`🔄 Movendo lead ${leadId} para coluna ${col.id}...`);
+          
+          try {
+            const { data, error } = await supabase
+              .from('leads')
+              .update({ column_id: col.id })
+              .eq('id', leadId)
+              .select();
+            
+            if (error) {
+              updateDebugInfo('❌ Erro ao mover lead: ' + error.message);
+              console.error('Erro detalhado:', error);
+            } else {
+              updateDebugInfo('✅ Lead movido com sucesso!');
+              console.log('Lead atualizado:', data);
+              // Recarregar dados após pequeno delay para garantir que a atualização foi processada
+              setTimeout(carregarTudo, 100);
+            }
+          } catch (err) {
+            updateDebugInfo('❌ Erro inesperado: ' + err.message);
+            console.error('Erro inesperado:', err);
+          }
+        };
+        
+        // Adicionar cards
+        const filtered = leads.filter(l => {
+          // Se o lead tem column_id, verifica se é igual ao da coluna
+          if (l.column_id) return l.column_id === col.id;
+          // Se não tem column_id, só vai para a primeira coluna
+          return colIdx === 0;
+        });
+        count.textContent = filtered.length;
+        filtered.forEach(lead => {
+          const card = document.createElement('div');
+          card.className = 'lead-card';
+          card.draggable = true;
+          card.ondragstart = e => {
+            e.dataTransfer.setData('lead-id', lead.id);
+            updateDebugInfo(`🔄 Iniciando arraste do lead ${lead.id}`);
+            console.log('Dragging lead:', lead);
+          };
+          card.innerHTML = `
+            <div class="lead-name">${lead.name || 'N/A'}</div>
+            <div class="lead-email">${lead.email || 'N/A'}</div>
+            <div class="lead-phone">${lead.phone || 'N/A'}</div>
+            <div class="lead-date">${lead.created_at ? new Date(lead.created_at).toLocaleString('pt-BR') : ''}</div>
+            <div class="lead-actions">
+              <button class="delete-lead-btn" onclick="deleteLead('${lead.id}', '${lead.name}')">🗑️ Excluir</button>
+            </div>
+          `;
+          leadsContainer.appendChild(card);
+        });
+        colDiv.appendChild(leadsContainer);
+        pipeline.appendChild(colDiv);
+      });
+    }
+    // Adicionar coluna
+    document.getElementById('addColumnBtn').onclick = async () => {
+      const name = prompt('Nome da nova coluna:');
+      if (name && name.trim()) {
+        const { data, error } = await supabase.from('kanban_columns').insert([{ name: name.trim(), order: columns.length }]).select();
+        if (!error) carregarTudo();
+      }
+    };
+    // Função para excluir lead
+    async function deleteLead(leadId, leadName) {
+      const confirmDelete = confirm(`Tem certeza que deseja excluir o lead "${leadName}"?\n\nEsta ação não pode ser desfeita.`);
+      
+      if (!confirmDelete) return;
+      
+      updateDebugInfo(`🗑️ Excluindo lead ${leadName}...`);
+      
+      try {
+        const { error } = await supabase
+          .from('leads')
+          .delete()
+          .eq('id', leadId);
+        
+        if (error) {
+          updateDebugInfo('❌ Erro ao excluir lead: ' + error.message);
+          alert('Erro ao excluir lead: ' + error.message);
+        } else {
+          updateDebugInfo('✅ Lead excluído com sucesso!');
+          carregarTudo(); // Recarregar a lista
+        }
+      } catch (err) {
+        updateDebugInfo('❌ Erro inesperado: ' + err.message);
+        alert('Erro inesperado: ' + err.message);
+      }
+    }
+    
+    // Tornar a função global para uso no onclick
+    window.deleteLead = deleteLead;
+    
+    // Carregar tudo ao iniciar
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDebugInfo('Inicializando...');
+      setTimeout(carregarTudo, 500);
+    });
+    setInterval(carregarTudo, 3000);
+  </script>
+</body>
+</html> 
