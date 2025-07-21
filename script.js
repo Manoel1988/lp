@@ -238,12 +238,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
               console.log('Lead salvo com sucesso!');
               console.log('Dados retornados:', data);
-              alert('Lead cadastrado com sucesso!');
               closeModal();
               // Limpar o formulário
               document.getElementById('leadName').value = '';
               document.getElementById('leadEmail').value = '';
               document.getElementById('leadPhone').value = '';
+              // Redirecionar para o Google Calendar
+              window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
             }
           } catch (error) {
             console.error('Erro ao salvar lead:', error);
@@ -346,12 +347,13 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Erro ao cadastrar lead: ' + error.message);
           } else {
             console.log('Lead salvo com sucesso!');
-            alert('Lead cadastrado com sucesso!');
             closeModal();
             // Limpar o formulário
             document.getElementById('leadName').value = '';
             document.getElementById('leadEmail').value = '';
             document.getElementById('leadPhone').value = '';
+            // Redirecionar para o Google Calendar
+            window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
           }
         } catch (error) {
           console.error('Erro ao salvar lead:', error);
