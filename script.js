@@ -99,6 +99,50 @@ function formatPhone(phone) {
   return phone; // Retorna como está se não conseguir formatar
 }
 
+// Função para enviar dados para webhook do Make
+async function enviarParaWebhook(data) {
+  // Usar configuração do webhook
+  const config = window.WEBHOOK_CONFIG || {
+    url: 'https://hook.eu1.make.com/SEU_WEBHOOK_ID_AQUI',
+    timeout: 10000,
+    headers: { 'Content-Type': 'application/json' }
+  };
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    
+    const response = await fetch(config.url, {
+      method: 'POST',
+      headers: config.headers,
+      body: JSON.stringify({
+        lead: data,
+        metadata: {
+          source: 'landing_page',
+          timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || 'direct',
+          page_url: window.location.href
+        }
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    console.log('✅ Webhook enviado com sucesso:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro ao enviar para webhook:', error);
+    throw error;
+  }
+}
+
 // Função para inicializar Supabase
 function initSupabase() {
   try {
@@ -543,6 +587,22 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Erro ao cadastrar lead: ' + error.message);
           } else {
             console.log('Lead salvo com sucesso!');
+            
+            // Enviar dados para webhook do Make
+            try {
+              await enviarParaWebhook({
+                name,
+                email: email.toLowerCase(),
+                phone: formattedPhone,
+                source: 'landing_page',
+                timestamp: new Date().toISOString()
+              });
+              console.log('✅ Dados enviados para webhook do Make');
+            } catch (webhookError) {
+              console.warn('⚠️ Erro ao enviar para webhook:', webhookError);
+              // Continua mesmo se o webhook falhar
+            }
+            
             closeModal();
             // Limpar o formulário
             document.getElementById('leadName').value = '';
