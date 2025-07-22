@@ -418,13 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
               document.getElementById('leadName').value = '';
               document.getElementById('leadEmail').value = '';
               document.getElementById('leadPhone').value = '';
-              // Abrir grupo do WhatsApp primeiro (para evitar bloqueio de popup)
-              const whatsappWindow = window.open('https://chat.whatsapp.com/F1g23kSlLoeEtiK46oBzK2', '_blank');
-              
-              // Redirecionar para o Google Calendar na aba principal após um pequeno delay
-              setTimeout(function() {
-                window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
-              }, 100);
+              // Redirecionar para o Google Calendar na aba principal
+              window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
             }
           } catch (error) {
             console.error('Erro ao salvar lead:', error);
