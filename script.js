@@ -5,6 +5,100 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 // Verificar se o Supabase está disponível
 let supabase;
 
+// Funções de validação
+function validateEmail(email) {
+  console.log('🔍 VALIDANDO EMAIL:', email);
+  // Remove espaços e converte para minúsculas
+  email = email.trim().toLowerCase();
+  
+  // Verifica se está vazio
+  if (!email) {
+    return { isValid: false, message: 'Email é obrigatório' };
+  }
+  
+  // Verifica se não tem espaços no meio
+  if (email.includes(' ')) {
+    return { isValid: false, message: 'O email não pode conter espaços' };
+  }
+  
+  // Regex mais rigorosa para validação de email
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  
+  // Verifica se o email tem formato válido
+  if (!emailRegex.test(email)) {
+    return { isValid: false, message: 'Por favor, insira um email válido (exemplo: seu@email.com)' };
+  }
+  
+  // Verifica se tem pelo menos um caractere antes e depois do @
+  const parts = email.split('@');
+  if (parts[0].length === 0 || parts[1].length === 0) {
+    return { isValid: false, message: 'Email inválido' };
+  }
+  
+  // Verifica se o domínio tem pelo menos um ponto
+  if (!parts[1].includes('.')) {
+    return { isValid: false, message: 'Email inválido - domínio deve ter extensão (ex: .com, .br)' };
+  }
+  
+  // Verifica se não tem caracteres especiais problemáticos
+  if (email.includes('..') || email.includes('@@') || email.startsWith('.') || email.endsWith('.')) {
+    return { isValid: false, message: 'Email inválido - formato incorreto' };
+  }
+  
+  // Verifica se o domínio tem pelo menos 2 caracteres após o ponto
+  const domainParts = parts[1].split('.');
+  if (domainParts.length < 2 || domainParts[domainParts.length - 1].length < 2) {
+    return { isValid: false, message: 'Email inválido - domínio deve ter extensão válida' };
+  }
+  
+  return { isValid: true, message: 'Email válido' };
+}
+
+function validatePhone(phone) {
+  // Remove todos os caracteres não numéricos
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Verifica se tem pelo menos 10 dígitos (DDD + número)
+  if (cleanPhone.length < 10) {
+    return { isValid: false, message: 'Telefone deve ter pelo menos 10 dígitos (DDD + número)' };
+  }
+  
+  // Verifica se tem no máximo 11 dígitos (DDD + número com 9 dígitos)
+  if (cleanPhone.length > 11) {
+    return { isValid: false, message: 'Telefone deve ter no máximo 11 dígitos' };
+  }
+  
+  // Verifica se o DDD é válido (11 a 99)
+  const ddd = cleanPhone.substring(0, 2);
+  if (parseInt(ddd) < 11 || parseInt(ddd) > 99) {
+    return { isValid: false, message: 'DDD inválido (deve ser entre 11 e 99)' };
+  }
+  
+  // Verifica se o número não é apenas zeros
+  const number = cleanPhone.substring(2);
+  if (number.replace(/0/g, '').length === 0) {
+    return { isValid: false, message: 'Número de telefone inválido' };
+  }
+  
+  return { isValid: true, message: 'Telefone válido' };
+}
+
+function formatPhone(phone) {
+  // Remove todos os caracteres não numéricos
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Formata o telefone
+  if (cleanPhone.length === 11) {
+    // (11) 99999-9999
+    return `(${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 7)}-${cleanPhone.substring(7)}`;
+  } else if (cleanPhone.length === 10) {
+    // (11) 9999-9999
+    return `(${cleanPhone.substring(0, 2)}) ${cleanPhone.substring(2, 6)}-${cleanPhone.substring(6)}`;
+  }
+  
+  return phone; // Retorna como está se não conseguir formatar
+}
+
 // Função para inicializar Supabase
 function initSupabase() {
   try {
@@ -154,6 +248,66 @@ document.addEventListener('DOMContentLoaded', function() {
     if (leadForm) {
       console.log('Formulário encontrado, adicionando evento submit...');
       
+      // Adicionar validação em tempo real nos campos
+      const emailField = document.getElementById('leadEmail');
+      const phoneField = document.getElementById('leadPhone');
+      
+      if (emailField) {
+        emailField.addEventListener('blur', function() {
+          const email = this.value.trim();
+          if (email) {
+            const validation = validateEmail(email);
+            if (!validation.isValid) {
+              this.style.borderColor = '#ef4444';
+              this.title = validation.message;
+            } else {
+              this.style.borderColor = '#10b981';
+              this.title = '';
+            }
+          } else {
+            this.style.borderColor = '';
+            this.title = '';
+          }
+        });
+      }
+      
+      if (phoneField) {
+        phoneField.addEventListener('blur', function() {
+          const phone = this.value.trim();
+          if (phone) {
+            const validation = validatePhone(phone);
+            if (!validation.isValid) {
+              this.style.borderColor = '#ef4444';
+              this.title = validation.message;
+            } else {
+              this.style.borderColor = '#10b981';
+              this.title = '';
+              // Formatar automaticamente
+              this.value = formatPhone(phone);
+            }
+          } else {
+            this.style.borderColor = '';
+            this.title = '';
+          }
+        });
+        // Máscara para telefone celular (11 dígitos) apenas
+        phoneField.addEventListener('input', function(e) {
+          let val = this.value.replace(/\D/g, '');
+          if (val.length > 11) val = val.substring(0, 11);
+          let formatted = '';
+          if (val.length > 0) {
+            formatted += '(' + val.substring(0, 2);
+          }
+          if (val.length >= 3) {
+            formatted += ') ' + val.substring(2, 7);
+          }
+          if (val.length > 7) {
+            formatted += '-' + val.substring(7, 11);
+          }
+          this.value = formatted;
+        });
+      }
+      
       // Adicionar evento de submit
       leadForm.addEventListener('submit', async function(e) {
         console.log('=== FORMULÁRIO SUBMETIDO ===');
@@ -185,11 +339,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const phone = phoneField.value.trim();
         
         console.log('Dados do formulário:', { name, email, phone });
-        console.log('Campos válidos:', {
-          name: name.length > 0,
-          email: email.length > 0 && email.includes('@'),
-          phone: phone.length > 0
-        });
+        
+        // Validações
+        if (!name || name.length < 2) {
+          alert('Por favor, insira seu nome completo (mínimo 2 caracteres)');
+          nameField.focus();
+          return;
+        }
+        
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.isValid) {
+          alert(emailValidation.message);
+          emailField.focus();
+          return;
+        }
+        
+        const phoneValidation = validatePhone(phone);
+        if (!phoneValidation.isValid) {
+          alert(phoneValidation.message);
+          phoneField.focus();
+          return;
+        }
+        
+        // Formatar o telefone antes de salvar
+        const formattedPhone = formatPhone(phone);
+        
+        console.log('Dados validados:', { name, email: email.toLowerCase(), phone: formattedPhone });
         
         if (name && email && phone) {
           // Tentar reinicializar o Supabase se não estiver disponível
@@ -223,8 +398,8 @@ document.addEventListener('DOMContentLoaded', function() {
               .from('leads')
               .insert([{
                 name, 
-                email, 
-                phone,
+                email: email.toLowerCase(), 
+                phone: formattedPhone,
                 column_id: columnId // Associar à primeira coluna
               }])
               .select();
@@ -243,8 +418,12 @@ document.addEventListener('DOMContentLoaded', function() {
               document.getElementById('leadName').value = '';
               document.getElementById('leadEmail').value = '';
               document.getElementById('leadPhone').value = '';
-              // Redirecionar para o Google Calendar
+              // Redirecionar para o Google Calendar na aba principal
               window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
+              // Abrir grupo do WhatsApp em nova aba com delay
+              setTimeout(function() {
+                window.open('https://chat.whatsapp.com/F1g23kSlLoeEtiK46oBzK2', '_blank');
+              }, 500);
             }
           } catch (error) {
             console.error('Erro ao salvar lead:', error);
@@ -299,10 +478,31 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Dados do formulário:', { name, email, phone });
         
-        if (!name || !email || !phone) {
-          alert('Por favor, preencha todos os campos!');
+        // Validações
+        if (!name || name.length < 2) {
+          alert('Por favor, insira seu nome completo (mínimo 2 caracteres)');
+          nameField.focus();
           return;
         }
+        
+        const emailValidation = validateEmail(email);
+        if (!emailValidation.isValid) {
+          alert(emailValidation.message);
+          emailField.focus();
+          return;
+        }
+        
+        const phoneValidation = validatePhone(phone);
+        if (!phoneValidation.isValid) {
+          alert(phoneValidation.message);
+          phoneField.focus();
+          return;
+        }
+        
+        // Formatar o telefone antes de salvar
+        const formattedPhone = formatPhone(phone);
+        
+        console.log('Dados validados:', { name, email: email.toLowerCase(), phone: formattedPhone });
         
         // Tentar reinicializar o Supabase se não estiver disponível
         if (!supabase) {
@@ -334,8 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .from('leads')
             .insert([{
               name, 
-              email, 
-              phone,
+              email: email.toLowerCase(), 
+              phone: formattedPhone,
               column_id: columnId // Associar à primeira coluna
             }])
             .select();
@@ -352,8 +552,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('leadName').value = '';
             document.getElementById('leadEmail').value = '';
             document.getElementById('leadPhone').value = '';
-            // Redirecionar para o Google Calendar
+            // Redirecionar para o Google Calendar na aba principal
             window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
+            // Abrir grupo do WhatsApp em nova aba
+            window.open('https://chat.whatsapp.com/F1g23kSlLoeEtiK46oBzK2', '_blank');
           }
         } catch (error) {
           console.error('Erro ao salvar lead:', error);
@@ -584,34 +786,53 @@ document.addEventListener('DOMContentLoaded', function() {
         openModal();
     };
     
-    // Função para testar o formulário
+        // Função para testar o formulário
     window.testForm = function() {
-        console.log('=== TESTE DO FORMULÁRIO ===');
-        const form = document.getElementById('leadForm');
-        const nameField = document.getElementById('leadName');
-        const emailField = document.getElementById('leadEmail');
-        const phoneField = document.getElementById('leadPhone');
+      console.log('=== TESTE DO FORMULÁRIO ===');
+      const form = document.getElementById('leadForm');
+      const nameField = document.getElementById('leadName');
+      const emailField = document.getElementById('leadEmail');
+      const phoneField = document.getElementById('leadPhone');
+      
+      console.log('Elementos encontrados:', {
+        form: !!form,
+        nameField: !!nameField,
+        emailField: !!emailField,
+        phoneField: !!phoneField
+      });
+      
+      if (form && nameField && emailField && phoneField) {
+        // Preencher campos de teste
+        nameField.value = 'Teste da Silva';
+        emailField.value = 'teste@email.com';
+        phoneField.value = '(11) 99999-9999';
         
-        console.log('Elementos encontrados:', {
-            form: !!form,
-            nameField: !!nameField,
-            emailField: !!emailField,
-            phoneField: !!phoneField
-        });
+        console.log('Campos preenchidos para teste');
+        console.log('Supabase disponível:', !!supabase);
         
-        if (form && nameField && emailField && phoneField) {
-            // Preencher campos de teste
-            nameField.value = 'Teste da Silva';
-            emailField.value = 'teste@email.com';
-            phoneField.value = '(11) 99999-9999';
-            
-            console.log('Campos preenchidos para teste');
-            console.log('Supabase disponível:', !!supabase);
-            
-            // Simular submit
-            form.dispatchEvent(new Event('submit', { cancelable: true }));
-        } else {
-            console.error('Elementos do formulário não encontrados!');
-        }
+        // Simular submit
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      } else {
+        console.error('Elementos do formulário não encontrados!');
+      }
+    };
+    
+    // Função para testar validações
+    window.testValidations = function() {
+      console.log('=== TESTE DAS VALIDAÇÕES ===');
+      
+      // Teste email válido
+      console.log('Teste email válido:', validateEmail('teste@email.com'));
+      
+      // Teste email inválido
+      console.log('Teste email inválido:', validateEmail('teste@'));
+      console.log('Teste email com espaço:', validateEmail('teste @email.com'));
+      console.log('Teste email malformado:', validateEmail('882173 a gm ail.com'));
+      
+      // Teste telefone válido
+      console.log('Teste telefone válido:', validatePhone('11999999999'));
+      
+      // Teste telefone inválido
+      console.log('Teste telefone inválido:', validatePhone('123'));
     };
 }); 

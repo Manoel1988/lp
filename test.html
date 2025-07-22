@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Validações</title>
+</head>
+<body>
+    <h1>Teste de Validações</h1>
+    
+    <form id="testForm">
+        <label for="name">Nome:</label>
+        <input type="text" id="name" required><br><br>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" required><br><br>
+        
+        <label for="phone">Telefone:</label>
+        <input type="tel" id="phone" required><br><br>
+        
+        <button type="submit">Testar Validações</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script src="script.js?v=2"></script>
+    <script>
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            
+            const resultDiv = document.getElementById('result');
+            
+            // Testar validações
+            const nameValid = name && name.length >= 2;
+            const emailValidation = validateEmail(email);
+            const phoneValidation = validatePhone(phone);
+            
+            let result = '<h3>Resultados:</h3>';
+            result += `<p>Nome: ${nameValid ? '✅ Válido' : '❌ Inválido'}</p>`;
+            result += `<p>Email: ${emailValidation.isValid ? '✅ Válido' : '❌ Inválido - ' + emailValidation.message}</p>`;
+            result += `<p>Telefone: ${phoneValidation.isValid ? '✅ Válido' : '❌ Inválido - ' + phoneValidation.message}</p>`;
+            
+            resultDiv.innerHTML = result;
+        });
+    </script>
+</body>
+</html> 
