@@ -550,8 +550,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('leadPhone').value = '';
             // Redirecionar para o Google Calendar na aba principal
             window.location.href = 'https://calendar.google.com/calendar/u/0/appointments/schedules/AcZssZ0sY_HzXpwGONtwLergC-_4pgWttFNgcaquvSzw9teT23XNrdueNz1SAjzO5GBD6ag8bBwkqzpE';
-            // Abrir grupo do WhatsApp em nova aba
-            window.open('https://chat.whatsapp.com/F1g23kSlLoeEtiK46oBzK2', '_blank');
           }
         } catch (error) {
           console.error('Erro ao salvar lead:', error);
