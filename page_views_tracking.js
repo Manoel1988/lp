@@ -13,6 +13,20 @@ const TRACKING_CONFIG = {
   trackUTM: true
 };
 
+// Inicializar cliente Supabase se não existir
+function inicializarSupabase() {
+  if (typeof window.supabase === 'undefined' && typeof supabase !== 'undefined') {
+    window.supabase = supabase;
+  }
+  
+  if (typeof window.supabase === 'undefined') {
+    console.warn('⚠️ Cliente Supabase não encontrado. Usando dados de exemplo.');
+    return false;
+  }
+  
+  return true;
+}
+
 // Função para obter parâmetros UTM da URL
 function getUTMParams() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -50,10 +64,10 @@ async function registrarVisita() {
   if (!TRACKING_CONFIG.trackPageViews) return;
   
   try {
-    // Verificar se já existe uma instância do Supabase
-    let supabase = window.supabase;
-    if (!supabase) {
-      console.warn('Supabase não disponível para tracking');
+    // Inicializar Supabase
+    if (!inicializarSupabase()) {
+      console.log('📊 Usando dados de exemplo para tracking');
+      criarDadosExemplo();
       return;
     }
     
@@ -72,7 +86,7 @@ async function registrarVisita() {
     console.log('📊 Registrando visita:', visitData);
     
     // Salvar no Supabase
-    const { data, error } = await supabase
+    const { data, error } = await window.supabase
       .from('page_views')
       .insert([visitData])
       .select();
@@ -90,6 +104,8 @@ async function registrarVisita() {
     
   } catch (error) {
     console.error('❌ Erro inesperado no tracking:', error);
+    // Em caso de erro, usar dados de exemplo
+    criarDadosExemplo();
   }
 }
 
@@ -145,9 +161,9 @@ function criarDadosExemplo() {
 // Função para obter estatísticas de visitas
 async function obterEstatisticasVisitas(dias = 30) {
   try {
-    let supabase = window.supabase;
-    if (!supabase) {
-      console.error('Supabase não disponível');
+    // Inicializar Supabase
+    if (!inicializarSupabase()) {
+      console.log('📊 Usando dados de exemplo para estatísticas');
       return obterDadosExemplo();
     }
     
@@ -156,7 +172,7 @@ async function obterEstatisticasVisitas(dias = 30) {
     dataInicio.setDate(dataInicio.getDate() - dias);
     
     // Buscar visitas dos últimos X dias
-    const { data, error } = await supabase
+    const { data, error } = await window.supabase
       .from('page_views')
       .select('*')
       .gte('timestamp', dataInicio.toISOString())
@@ -168,7 +184,7 @@ async function obterEstatisticasVisitas(dias = 30) {
         console.warn('⚠️ Tabela page_views não existe. Usando dados de exemplo...');
         return obterDadosExemplo();
       }
-      return null;
+      return obterDadosExemplo();
     }
     
     // Se não há dados reais, usar dados de exemplo
@@ -328,6 +344,7 @@ if (document.readyState === 'loading') {
 // Exportar funções para uso global
 if (typeof window !== 'undefined') {
   window.TRACKING_CONFIG = TRACKING_CONFIG;
+  window.inicializarSupabase = inicializarSupabase;
   window.registrarVisita = registrarVisita;
   window.obterEstatisticasVisitas = obterEstatisticasVisitas;
   window.agruparVisitasPorDia = agruparVisitasPorDia;
