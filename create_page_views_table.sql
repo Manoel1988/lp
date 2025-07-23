@@ -8,69 +8,53 @@ CREATE TABLE IF NOT EXISTS page_views (
   page_title TEXT,
   referrer TEXT,
   timestamp TIMESTAMPTZ DEFAULT NOW(),
-  date DATE DEFAULT CURRENT_DATE,
-  hour INTEGER DEFAULT EXTRACT(HOUR FROM NOW()),
-  
-  -- Informações do dispositivo
-  device TEXT DEFAULT 'desktop',
+  date DATE GENERATED ALWAYS AS (DATE(timestamp)) STORED,
+  hour INTEGER GENERATED ALWAYS AS (EXTRACT(HOUR FROM timestamp)) STORED,
+  device TEXT,
   user_agent TEXT,
   screen_width INTEGER,
   screen_height INTEGER,
-  language TEXT DEFAULT 'pt-BR',
-  
-  -- Parâmetros UTM
+  language TEXT,
   utm_source TEXT,
   utm_medium TEXT,
   utm_campaign TEXT,
   utm_term TEXT,
   utm_content TEXT,
-  
-  -- Timestamps automáticos
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Criar índices para melhor performance
-CREATE INDEX IF NOT EXISTS idx_page_views_date ON page_views(date);
 CREATE INDEX IF NOT EXISTS idx_page_views_timestamp ON page_views(timestamp);
+CREATE INDEX IF NOT EXISTS idx_page_views_date ON page_views(date);
 CREATE INDEX IF NOT EXISTS idx_page_views_device ON page_views(device);
-CREATE INDEX IF NOT EXISTS idx_page_views_utm_source ON page_views(utm_source);
+CREATE INDEX IF NOT EXISTS idx_page_views_referrer ON page_views(referrer);
 
--- Função para atualizar updated_at automaticamente
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Trigger para atualizar updated_at
-CREATE TRIGGER update_page_views_updated_at 
-    BEFORE UPDATE ON page_views 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
-
--- Políticas de segurança (RLS)
+-- Habilitar Row Level Security (RLS)
 ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
 
--- Permitir inserção para usuários anônimos (para tracking)
-CREATE POLICY "Allow anonymous insert" ON page_views
-    FOR INSERT WITH CHECK (true);
+-- Criar política para permitir inserção de dados anônimos
+CREATE POLICY "Permitir inserção de page views anônimos" ON page_views
+  FOR INSERT WITH CHECK (true);
 
--- Permitir leitura para usuários autenticados
-CREATE POLICY "Allow authenticated read" ON page_views
-    FOR SELECT USING (auth.role() = 'authenticated');
-
--- Permitir leitura para usuários anônimos (para analytics)
-CREATE POLICY "Allow anonymous read" ON page_views
-    FOR SELECT USING (true);
+-- Criar política para permitir leitura de dados anônimos
+CREATE POLICY "Permitir leitura de page views anônimos" ON page_views
+  FOR SELECT USING (true);
 
 -- Comentários na tabela
-COMMENT ON TABLE page_views IS 'Tabela para armazenar dados de tracking de visitas à página';
+COMMENT ON TABLE page_views IS 'Tabela para armazenar dados de visitas às páginas';
 COMMENT ON COLUMN page_views.page_url IS 'URL da página visitada';
+COMMENT ON COLUMN page_views.page_title IS 'Título da página';
 COMMENT ON COLUMN page_views.referrer IS 'URL de origem (referrer)';
+COMMENT ON COLUMN page_views.timestamp IS 'Data e hora da visita';
+COMMENT ON COLUMN page_views.date IS 'Data da visita (gerada automaticamente)';
+COMMENT ON COLUMN page_views.hour IS 'Hora da visita (gerada automaticamente)';
 COMMENT ON COLUMN page_views.device IS 'Tipo de dispositivo (desktop, mobile, tablet)';
+COMMENT ON COLUMN page_views.user_agent IS 'User agent do navegador';
+COMMENT ON COLUMN page_views.screen_width IS 'Largura da tela';
+COMMENT ON COLUMN page_views.screen_height IS 'Altura da tela';
+COMMENT ON COLUMN page_views.language IS 'Idioma do navegador';
 COMMENT ON COLUMN page_views.utm_source IS 'Parâmetro UTM source';
 COMMENT ON COLUMN page_views.utm_medium IS 'Parâmetro UTM medium';
-COMMENT ON COLUMN page_views.utm_campaign IS 'Parâmetro UTM campaign'; 
+COMMENT ON COLUMN page_views.utm_campaign IS 'Parâmetro UTM campaign';
+COMMENT ON COLUMN page_views.utm_term IS 'Parâmetro UTM term';
+COMMENT ON COLUMN page_views.utm_content IS 'Parâmetro UTM content'; 
