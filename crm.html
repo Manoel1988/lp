@@ -190,64 +190,13 @@
     <a href="index.html" class="back-btn">Voltar para Landing Page</a>
     <h1>Pipeline de Leads</h1>
     
-    <!-- Seção de Analytics -->
-    <div class="analytics-section">
-      <h2 style="color: #fbbf24; margin-bottom: 20px;">📊 Analytics - Visitas Diárias</h2>
-      
-      <!-- Filtros -->
-      <div class="analytics-filters" style="margin-bottom: 20px;">
-        <select id="periodoSelect" style="background: #334155; color: #fff; border: 1px solid #475569; border-radius: 6px; padding: 8px 12px; margin-right: 10px;">
-          <option value="7">Últimos 7 dias</option>
-          <option value="30" selected>Últimos 30 dias</option>
-          <option value="90">Últimos 90 dias</option>
-        </select>
-        <button id="refreshAnalytics" style="background: #fbbf24; color: #1e293b; border: none; border-radius: 6px; padding: 8px 16px; font-weight: 600; cursor: pointer;">🔄 Atualizar</button>
-      </div>
-      
-      <!-- Cards de Resumo -->
-      <div class="analytics-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div class="summary-card" style="background: #334155; border-radius: 12px; padding: 20px; text-align: center;">
-          <h3 style="color: #fbbf24; margin: 0 0 10px 0; font-size: 1.1rem;">Total de Visitas</h3>
-          <div id="totalVisitas" style="font-size: 2rem; font-weight: 700; color: #fff;">-</div>
-        </div>
-        <div class="summary-card" style="background: #334155; border-radius: 12px; padding: 20px; text-align: center;">
-          <h3 style="color: #fbbf24; margin: 0 0 10px 0; font-size: 1.1rem;">Média Diária</h3>
-          <div id="mediaDiaria" style="font-size: 2rem; font-weight: 700; color: #fff;">-</div>
-        </div>
-        <div class="summary-card" style="background: #334155; border-radius: 12px; padding: 20px; text-align: center;">
-          <h3 style="color: #fbbf24; margin: 0 0 10px 0; font-size: 1.1rem;">Dispositivo Mais Usado</h3>
-          <div id="dispositivoTop" style="font-size: 1.5rem; font-weight: 700; color: #fff;">-</div>
-        </div>
-      </div>
-      
-      <!-- Gráfico de Visitas -->
-              <div class="chart-container" style="background: #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
-          <h3 style="color: #fbbf24; margin: 0 0 20px 0;">Visitas por Dia</h3>
-          <div style="height: 200px; position: relative;">
-            <canvas id="visitasChart"></canvas>
-          </div>
-        </div>
-      
-      <!-- Estatísticas por Dispositivo -->
-      <div class="device-stats" style="background: #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
-        <h3 style="color: #fbbf24; margin: 0 0 20px 0;">Visitas por Dispositivo</h3>
-        <div id="deviceStats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;"></div>
-      </div>
-      
-      <!-- Top Referrers -->
-      <div class="referrer-stats" style="background: #334155; border-radius: 12px; padding: 20px;">
-        <h3 style="color: #fbbf24; margin: 0 0 20px 0;">Principais Fontes de Tráfego</h3>
-        <div id="referrerStats"></div>
-      </div>
-    </div>
+
     
     <div class="pipeline-container" id="pipelineContainer"></div>
     <button id="addColumnBtn" style="margin: 24px auto 0 auto; display: block; background: #fbbf24; color: #1e293b; border: none; border-radius: 8px; padding: 12px 28px; font-size: 1rem; font-weight: 700; cursor: pointer;">+ Adicionar coluna</button>
   </div>
   
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="page_views_tracking.js"></script>
   <script>
     const supabaseUrl = 'https://wwnylounipjlxjxyopnf.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind3bnlsb3VuaXBqbHhqeHlvcG5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyMTg5ODEsImV4cCI6MjA1OTc5NDk4MX0.p9KB50Srt7vyvZNc0pFXycvsQivnB0x4H8TdScNRKiU';
@@ -269,9 +218,7 @@
     }
     initSupabaseCRM();
 
-    // Variáveis para analytics
-    let visitasChart = null;
-    let analyticsData = null;
+
 
     // Carregar colunas e leads do Supabase
     let columns = [];
@@ -492,248 +439,11 @@
       updateDebugInfo('Inicializando...');
       setTimeout(carregarTudo, 500);
       
-      // Carregar analytics após um delay
-      setTimeout(() => {
-        carregarAnalytics();
-      }, 1000);
+
     });
     setInterval(carregarTudo, 3000);
     
-    // ===== FUNÇÕES DE ANALYTICS =====
-    
-    // Função para carregar analytics
-    async function carregarAnalytics() {
-      const periodo = parseInt(document.getElementById('periodoSelect').value);
-      updateDebugInfo(`Carregando analytics dos últimos ${periodo} dias...`);
-      
-      try {
-        // Obter dados de visitas
-        const visitas = await obterEstatisticasVisitas(periodo);
-        if (!visitas) {
-          updateDebugInfo('❌ Erro ao carregar dados de visitas');
-          return;
-        }
-        
-        analyticsData = visitas;
-        atualizarResumoAnalytics(visitas);
-        atualizarGraficoVisitas(visitas);
-        atualizarEstatisticasDispositivos(visitas);
-        atualizarTopReferrers(visitas);
-        
-        updateDebugInfo(`✅ Analytics carregados: ${visitas.length} visitas`);
-      } catch (error) {
-        updateDebugInfo('❌ Erro ao carregar analytics: ' + error.message);
-      }
-    }
-    
-    // Função para atualizar resumo
-    function atualizarResumoAnalytics(visitas) {
-      const totalVisitas = visitas.length;
-      const mediaDiaria = totalVisitas > 0 ? (totalVisitas / 30).toFixed(1) : 0;
-      
-      // Dispositivo mais usado
-      const dispositivos = obterEstatisticasDispositivos(visitas);
-      const dispositivoTop = Object.keys(dispositivos).reduce((a, b) => 
-        dispositivos[a] > dispositivos[b] ? a : b, 'desktop');
-      
-      document.getElementById('totalVisitas').textContent = totalVisitas;
-      document.getElementById('mediaDiaria').textContent = mediaDiaria;
-      document.getElementById('dispositivoTop').textContent = dispositivoTop.charAt(0).toUpperCase() + dispositivoTop.slice(1);
-    }
-    
-    // Função para atualizar gráfico de visitas
-    function atualizarGraficoVisitas(visitas) {
-      console.log('📊 Dados para gráfico:', visitas);
-      
-      const visitasPorDia = agruparVisitasPorDia(visitas);
-      console.log('📊 Visitas por dia:', visitasPorDia);
-      
-      // Preparar dados para o gráfico
-      const labels = Object.keys(visitasPorDia).sort();
-      const data = labels.map(data => visitasPorDia[data]);
-      
-      console.log('📊 Labels:', labels);
-      console.log('📊 Data:', data);
-      
-      const ctx = document.getElementById('visitasChart').getContext('2d');
-      
-      // Destruir gráfico anterior se existir
-      if (visitasChart) {
-        visitasChart.destroy();
-      }
-      
-      visitasChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.map(data => {
-            const [ano, mes, dia] = data.split('-');
-            return `${dia}/${mes}`;
-          }),
-          datasets: [{
-            label: 'Visitas',
-            data: data,
-            borderColor: '#fbbf24',
-            backgroundColor: 'rgba(251, 191, 36, 0.2)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: '#fbbf24',
-            pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              backgroundColor: '#1e293b',
-              titleColor: '#fbbf24',
-              bodyColor: '#fff',
-              borderColor: '#475569',
-              borderWidth: 1
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: '#fff',
-                font: {
-                  size: 11
-                }
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)',
-                display: true
-              },
-              border: {
-                color: 'rgba(255, 255, 255, 0.2)'
-              }
-            },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                color: '#fff',
-                font: {
-                  size: 11
-                },
-                stepSize: 1
-              },
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)',
-                display: true
-              },
-              border: {
-                color: 'rgba(255, 255, 255, 0.2)'
-              }
-            }
-          },
-          interaction: {
-            intersect: false,
-            mode: 'index'
-          }
-        }
-      });
-    }
-    
-    // Função para atualizar estatísticas por dispositivo
-    function atualizarEstatisticasDispositivos(visitas) {
-      const dispositivos = obterEstatisticasDispositivos(visitas);
-      const container = document.getElementById('deviceStats');
-      
-      container.innerHTML = '';
-      
-      Object.entries(dispositivos).forEach(([device, count]) => {
-        const percentage = ((count / visitas.length) * 100).toFixed(1);
-        const deviceName = device.charAt(0).toUpperCase() + device.slice(1);
-        
-        const deviceCard = document.createElement('div');
-        deviceCard.style.cssText = `
-          background: #273548;
-          border-radius: 8px;
-          padding: 15px;
-          text-align: center;
-        `;
-        
-        deviceCard.innerHTML = `
-          <div style="font-size: 1.5rem; margin-bottom: 5px;">${getDeviceIcon(device)}</div>
-          <div style="font-weight: 700; color: #fbbf24; margin-bottom: 5px;">${deviceName}</div>
-          <div style="font-size: 1.2rem; color: #fff;">${count}</div>
-          <div style="font-size: 0.9rem; color: #94a3b8;">${percentage}%</div>
-        `;
-        
-        container.appendChild(deviceCard);
-      });
-    }
-    
-    // Função para obter ícone do dispositivo
-    function getDeviceIcon(device) {
-      const icons = {
-        desktop: '🖥️',
-        mobile: '📱',
-        tablet: '📱'
-      };
-      return icons[device] || '💻';
-    }
-    
-    // Função para atualizar top referrers
-    function atualizarTopReferrers(visitas) {
-      const referrers = obterTopReferrers(visitas);
-      const container = document.getElementById('referrerStats');
-      
-      container.innerHTML = '';
-      
-      if (Object.keys(referrers).length === 0) {
-        container.innerHTML = '<p style="color: #94a3b8; text-align: center;">Nenhum referrer encontrado</p>';
-        return;
-      }
-      
-      Object.entries(referrers).forEach(([domain, count], index) => {
-        const percentage = ((count / visitas.length) * 100).toFixed(1);
-        
-        const referrerItem = document.createElement('div');
-        referrerItem.style.cssText = `
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 0;
-          border-bottom: 1px solid #475569;
-        `;
-        
-        referrerItem.innerHTML = `
-          <div style="display: flex; align-items: center;">
-            <span style="background: #fbbf24; color: #1e293b; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; margin-right: 10px;">${index + 1}</span>
-            <span style="color: #fff;">${domain}</span>
-          </div>
-          <div style="text-align: right;">
-            <div style="color: #fbbf24; font-weight: 700;">${count}</div>
-            <div style="color: #94a3b8; font-size: 0.8rem;">${percentage}%</div>
-          </div>
-        `;
-        
-        container.appendChild(referrerItem);
-      });
-    }
-    
-    // Event listeners para analytics
-    document.addEventListener('DOMContentLoaded', function() {
-      // Event listener para mudança de período
-      const periodoSelect = document.getElementById('periodoSelect');
-      if (periodoSelect) {
-        periodoSelect.addEventListener('change', carregarAnalytics);
-      }
-      
-      // Event listener para botão de atualizar
-      const refreshBtn = document.getElementById('refreshAnalytics');
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', carregarAnalytics);
-      }
-    });
+
   </script>
 </body>
 </html> 
