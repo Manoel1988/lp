@@ -221,10 +221,12 @@
       </div>
       
       <!-- Gráfico de Visitas -->
-      <div class="chart-container" style="background: #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
-        <h3 style="color: #fbbf24; margin: 0 0 20px 0;">Visitas por Dia</h3>
-        <canvas id="visitasChart" width="400" height="200"></canvas>
-      </div>
+              <div class="chart-container" style="background: #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+          <h3 style="color: #fbbf24; margin: 0 0 20px 0;">Visitas por Dia</h3>
+          <div style="height: 200px; position: relative;">
+            <canvas id="visitasChart"></canvas>
+          </div>
+        </div>
       
       <!-- Estatísticas por Dispositivo -->
       <div class="device-stats" style="background: #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
@@ -541,11 +543,17 @@
     
     // Função para atualizar gráfico de visitas
     function atualizarGraficoVisitas(visitas) {
+      console.log('📊 Dados para gráfico:', visitas);
+      
       const visitasPorDia = agruparVisitasPorDia(visitas);
+      console.log('📊 Visitas por dia:', visitasPorDia);
       
       // Preparar dados para o gráfico
       const labels = Object.keys(visitasPorDia).sort();
       const data = labels.map(data => visitasPorDia[data]);
+      
+      console.log('📊 Labels:', labels);
+      console.log('📊 Data:', data);
       
       const ctx = document.getElementById('visitasChart').getContext('2d');
       
@@ -565,10 +573,15 @@
             label: 'Visitas',
             data: data,
             borderColor: '#fbbf24',
-            backgroundColor: 'rgba(251, 191, 36, 0.1)',
-            borderWidth: 3,
+            backgroundColor: 'rgba(251, 191, 36, 0.2)',
+            borderWidth: 2,
             fill: true,
-            tension: 0.4
+            tension: 0.3,
+            pointBackgroundColor: '#fbbf24',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
           }]
         },
         options: {
@@ -576,28 +589,53 @@
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              labels: {
-                color: '#fff'
-              }
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#1e293b',
+              titleColor: '#fbbf24',
+              bodyColor: '#fff',
+              borderColor: '#475569',
+              borderWidth: 1
             }
           },
           scales: {
             x: {
               ticks: {
-                color: '#fff'
+                color: '#fff',
+                font: {
+                  size: 11
+                }
               },
               grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
+                color: 'rgba(255, 255, 255, 0.1)',
+                display: true
+              },
+              border: {
+                color: 'rgba(255, 255, 255, 0.2)'
               }
             },
             y: {
+              beginAtZero: true,
               ticks: {
-                color: '#fff'
+                color: '#fff',
+                font: {
+                  size: 11
+                },
+                stepSize: 1
               },
               grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
+                color: 'rgba(255, 255, 255, 0.1)',
+                display: true
+              },
+              border: {
+                color: 'rgba(255, 255, 255, 0.2)'
               }
             }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
           }
         }
       });
