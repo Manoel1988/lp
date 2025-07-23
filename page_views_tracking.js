@@ -77,8 +77,6 @@ async function registrarVisita() {
       page_title: document.title,
       referrer: document.referrer || null,
       timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
-      hour: new Date().getHours(),
       ...getDeviceInfo(),
       ...getUTMParams()
     };
@@ -214,8 +212,6 @@ function obterDadosExemplo() {
       page_title: 'Landing Page - Manoel Santos',
       referrer: 'https://google.com',
       timestamp: new Date().toISOString(),
-      date: new Date().toISOString().split('T')[0],
-      hour: new Date().getHours(),
       device: 'desktop',
       user_agent: navigator.userAgent,
       screen_width: screen.width,
@@ -227,8 +223,6 @@ function obterDadosExemplo() {
       page_title: 'Landing Page - Manoel Santos',
       referrer: 'https://facebook.com',
       timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 dia atrás
-      date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-      hour: 14,
       device: 'mobile',
       user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)',
       screen_width: 375,
@@ -240,8 +234,6 @@ function obterDadosExemplo() {
       page_title: 'Landing Page - Manoel Santos',
       referrer: 'https://instagram.com',
       timestamp: new Date(Date.now() - 172800000).toISOString(), // 2 dias atrás
-      date: new Date(Date.now() - 172800000).toISOString().split('T')[0],
-      hour: 10,
       device: 'desktop',
       user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       screen_width: 1920,
@@ -253,8 +245,6 @@ function obterDadosExemplo() {
       page_title: 'Landing Page - Manoel Santos',
       referrer: 'https://linkedin.com',
       timestamp: new Date(Date.now() - 259200000).toISOString(), // 3 dias atrás
-      date: new Date(Date.now() - 259200000).toISOString().split('T')[0],
-      hour: 16,
       device: 'tablet',
       user_agent: 'Mozilla/5.0 (iPad; CPU OS 14_0 like Mac OS X)',
       screen_width: 768,
@@ -266,8 +256,6 @@ function obterDadosExemplo() {
       page_title: 'Landing Page - Manoel Santos',
       referrer: 'https://twitter.com',
       timestamp: new Date(Date.now() - 345600000).toISOString(), // 4 dias atrás
-      date: new Date(Date.now() - 345600000).toISOString().split('T')[0],
-      hour: 9,
       device: 'mobile',
       user_agent: 'Mozilla/5.0 (Android 10; Mobile)',
       screen_width: 360,
@@ -285,7 +273,8 @@ function agruparVisitasPorDia(visitas) {
   const visitasPorDia = {};
   
   visitas.forEach(visita => {
-    const data = visita.date;
+    // Usar DATE(timestamp) se date não existir
+    const data = visita.date || new Date(visita.timestamp).toISOString().split('T')[0];
     if (!visitasPorDia[data]) {
       visitasPorDia[data] = 0;
     }
